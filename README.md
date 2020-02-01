@@ -61,6 +61,11 @@ I am not a professional developer, so this project might have a bad structure, b
 
 Also, the features listed above has the tendency to change at anytime, depending on my experience while attempting to implement them.
 
+## Contributions
+If you want to contribute to the project, contact me. Although, I am not really sure about this yet, since I am not really good with using GitHub features like (branching, merging etc.) so I don't know how to use GitHub with a group of people and I don't want to end up messing the whole project. 
+
+If you know how to use GitHub very well and you want to contribute me, please contact me. Thanks.
+
 ## Conclusion
 So far, I have gained so much knowledge while building this app and I intend to keep learning more new stuffs. Also, I've enjoyed working with Flutter even though it's quite challenging just as working with any other technology is, and I hope that you also gain or learn something from this app.
 
