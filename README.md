@@ -16,7 +16,12 @@ It came down to Flutter vs React Native (since Ionic is not as popular as these 
 
 I took a flutter course on Udemy, seeing the apps made in the course compared the ones made in the Android course, there is a distinct difference. With flutter, the app is nice-looking, easy and also possessing many nice features. I was so happy, then I started looking for a course that teaches how to make social media and I came across a nice one and from there, the journey of building this app started and it has been challenging and fun at the same time up to this point. 
 
-I will be adding some screenshots of the app here soon.
+## ScreenShots
+
+<img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583257/Screenshot_2020-02-02-01-39-50-98_gq44vf.png' width='250'>   <img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583258/Screenshot_2020-02-02-01-37-51-27_xngpct.png' width='250'>   <img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583258/Screenshot_2020-02-02-01-38-37-42_kanibl.png' width='250'>  
+<img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583258/Screenshot_2020-02-02-01-38-42-81_wb7app.png' width='250'>
+<img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583257/Screenshot_2020-02-02-01-38-48-94_fvaqia.png' width='250'>
+<img src='https://res.cloudinary.com/dh1bjqhbl/image/upload/v1580583258/Screenshot_2020-02-02-01-40-29-00_ezmw1r.png' width='250'>
 
 ## Important Notes For Running The Project 
 
