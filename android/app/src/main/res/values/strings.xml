@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <string name="app_name">iSocial</string>
+    <string name="facebook_app_id">2644845215631679</string>
+    <string name="fb_login_protocol_scheme">fb2644845215631679</string>
+</resources>
