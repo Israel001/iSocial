@@ -39,7 +39,7 @@ Soon, I will make a blog that will contain everything you need to do with third-
   - Full-Text Searching
   - In-App Groups
 
-## What That I Plan To Work On In The Future
+## What I Plan To Work On In The Future
   
   - Detection and restriction of inappropriate photos
   - In-App Quiz Games
