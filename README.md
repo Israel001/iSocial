@@ -2,7 +2,7 @@
 
 A customizable, educational and restricted social media platform.
 
-## Introduction
+## Background
 
 The idea behind this project is to build a customizable, educational and restricted social media platform specifically for mobile phones (Android and iOS). 
 
