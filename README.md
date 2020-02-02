@@ -74,6 +74,6 @@ If you know how to use GitHub very well and you want to contribute me, please co
 ## Conclusion
 So far, I have gained so much knowledge while building this app and I intend to keep learning more new stuffs. Also, I've enjoyed working with Flutter even though it's quite challenging just as working with any other technology is, and I hope that you also gain or learn something from this app.
 
-Please if you have any feedback, or suggestion or anything you wanna say regarding this app, please do in the ```Issues``` section or contact me via [israeloogch17619@fpt.edu.vn](mailto:israeloogch17619@fpt.edu.vn) 
+Please if you have any feedback, or suggestion or anything you wanna say regarding this app, please do in the ```Issues``` section or contact me via [israelobanijesu2@gmail.com](mailto:israelobanijesu2@gmail.com) 
 
 Don't forget to star the repo if you like the project 😉 
