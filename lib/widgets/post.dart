@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
-import 'package:isocial/pages/profile.dart';
+import 'package:isocial/pages/profile/profile.dart';
+import 'package:isocial/pages/search/search.dart';
+import 'package:native_state/native_state.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,9 +19,9 @@ import 'package:isocial/helpers/zoomable.dart';
 
 import 'package:isocial/models/user.dart';
 
-import 'package:isocial/pages/comments.dart';
-import 'package:isocial/pages/home.dart';
-import 'package:isocial/pages/post_studio.dart';
+import 'package:isocial/pages/comments/comments.dart';
+import 'package:isocial/pages/home/home.dart';
+import 'package:isocial/pages/post/post_studio.dart';
 
 import 'package:isocial/widgets/popup_menu.dart';
 import 'package:isocial/widgets/progress.dart';
@@ -91,12 +96,12 @@ class Post extends StatefulWidget {
     createdAt: this.createdAt,
     likes: this.likes,
     saves: this.saves,
-    likeCount: getLikeCount(this.likes)
+    likeCount: countTruishObject(this.likes)
   );
 }
 
-class _PostState extends State<Post> {
-  static var httpClient = new HttpClient();
+class _PostState extends State<Post> with StateRestoration {
+  SavedStateData savedState;
   final String currentUserId = currentUser?.id;
   final String postId;
   final String ownerId;
@@ -114,7 +119,7 @@ class _PostState extends State<Post> {
   int likeCount;
   Map likes;
   Map saves;
-  Map downloadedVideos;
+  bool isImagesScanned = false;
   bool isLiked;
   bool isSaved;
   int commentCount = 0;
@@ -144,6 +149,7 @@ class _PostState extends State<Post> {
   @override
   void initState() {
     super.initState();
+    scanImage();
     getCommentCount();
     if (feelingOrActivity != null) {
       feelingOrActivity.forEach((key, value) {
@@ -155,6 +161,11 @@ class _PostState extends State<Post> {
         mappedTaggedPeople.addAll({key: value});
       });
     }
+  }
+
+  @override
+  void restoreState(SavedStateData savedState) {
+    setState(() { this.savedState = savedState; });
   }
 
   List<T> map<T>(List list, Function handler) {
@@ -213,7 +224,7 @@ class _PostState extends State<Post> {
       future: usersRef.document(ownerId).get(),
       builder: (context, snapshot) {
         if(!snapshot.hasData) {
-          return circularProgress();
+          return circularProgress(context);
         }
         User user = User.fromDocument(snapshot.data);
         return ListTile(
@@ -226,7 +237,8 @@ class _PostState extends State<Post> {
             displayName,
             ownerId,
             feelingOrActivity,
-            taggedPeople
+            taggedPeople,
+            savedState: savedState
           ),
           subtitle: Text(location),
           trailing: handleTrailingWidget(choices)
@@ -266,6 +278,85 @@ class _PostState extends State<Post> {
     if (choice.id == 'edit') handleEditPost();
     if (choice.id == 'save') handleSavePost();
     if (choice.id == 'unfollow') unfollowUser(ownerId);
+    if (choice.id == 'hide') hidePost();
+    if (choice.id == 'snooze') snoozeOwnerPosts();
+    if (choice.id == 'report') handleReportPost();
+  }
+
+  semiRoundCard(text) {
+    return Container(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(13.0, 10.0, 13.0, 10.0),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white
+          )
+        )
+      ),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey,
+        borderRadius: BorderRadius.circular(20.0)
+      )
+    );
+  }
+
+  handleReportPost() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Please select a problem'),
+          content: Row(
+            children: <Widget>[
+              Expanded(
+                child: Row(
+                  children: <Widget>[
+                    semiRoundCard('Nudity'), semiRoundCard('Violence'),
+                    semiRoundCard('Harassment'), semiRoundCard('Suicide or Self-Injury'),
+                    semiRoundCard('Unauthorized Sales'), semiRoundCard('Hate Speech'),
+                    semiRoundCard('Terrorism'), semiRoundCard('Intellectual Property'),
+                    semiRoundCard('Fraud or Scam'), semiRoundCard('Mocking Victims'),
+                    semiRoundCard('Bullying'), semiRoundCard('Child Abuse'),
+                    semiRoundCard('Animal Abuse'), semiRoundCard('Sexual Activity'),
+                    semiRoundCard('Suicide or Self-Injury'),
+                    semiRoundCard('Promoting Drug Use'),
+                    semiRoundCard('Non-Consensual Intimate Images'),
+                    semiRoundCard('Sexual Exploitation'),
+                    semiRoundCard('Sharing Private Images'),
+                  ]
+                )
+              )
+            ]
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text(
+                'Done',
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold
+                )
+              ),
+              onPressed: null,
+            ),
+            FlatButton(
+              child: Text('Cancel'),
+              onPressed: () => Navigator.pop(context),
+            )
+          ]
+        );
+      }
+    );
+  }
+
+  hidePost() {
+    timelineRef
+      .document(currentUserId)
+      .collection('timelinePosts')
+      .document(postId)
+      .updateData({'hide': true});
   }
 
   handleEditPost() {
@@ -280,7 +371,8 @@ class _PostState extends State<Post> {
           displayName,
           ownerId,
           feelingOrActivity,
-          taggedPeople
+          taggedPeople,
+          savedState: savedState
         ),
         manualLocation: location,
         lockPost: postAudience == 'Followers' ? false : true,
@@ -382,11 +474,33 @@ class _PostState extends State<Post> {
     setState(() { isPostDeleted = true; });
   }
 
+  snoozeOwnerPosts() async {
+    usersRef
+      .document(ownerId)
+      .updateData({'snoozed': {currentUserId: true}});
+
+    QuerySnapshot postSnapshot = await timelineRef
+      .document(currentUserId)
+      .collection('timelinePosts')
+      .where('ownerId', isEqualTo: ownerId)
+      .getDocuments();
+    postSnapshot.documents.forEach((doc) {
+      if (doc.exists) {
+        timelineRef
+          .document(currentUserId)
+          .collection('timelinePosts')
+          .document(doc.documentID)
+          .updateData({'snoozed': true});
+      }
+    });
+  }
+
   getCommentCount() async {
     int count = 0;
     QuerySnapshot commentsSnapshot = await commentsRef
       .document(postId)
       .collection('comments')
+      .where('isDeleted', isEqualTo: false)
       .getDocuments();
     commentsSnapshot.documents.forEach((doc) {
       if (doc.exists) count += 1;
@@ -483,8 +597,9 @@ class _PostState extends State<Post> {
           'userId': currentUser.id,
           'userProfileImg': currentUser.photoUrl,
           'postId': postId,
-          'mediaUrl': mediaUrl,
-          'timestamp': timestamp
+          'mediaUrl': mediaUrl[0],
+          'timestamp': timestamp,
+          'postOwnerId': ownerId
         });
     }
   }
@@ -527,57 +642,104 @@ class _PostState extends State<Post> {
           Padding(padding: EdgeInsets.only(top: 50.0)),
           Padding(
             padding: EdgeInsets.only(left: 20.0, right: 20.0),
-            child: Text(
-              caption,
-              style: TextStyle(
-                fontSize: 30.0,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 30.0,
+                        fontWeight: FontWeight.bold,
+                        color: color
+                      ),
+                      children: buildCaption(context, caption, color: color)
+                    )
+                  )
+                )
+              ]
             )
           ),
           Padding(padding: EdgeInsets.only(bottom: 50.0))
         ]
-      ) : Text(caption)
+      ) : Padding(
+        padding: EdgeInsets.only(left: 20.0, right: 20.0),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: RichText(
+                textAlign: TextAlign.justify,
+                text: TextSpan(
+                  style: TextStyle(fontSize: 14.0, color: Colors.black),
+                  children: buildCaption(context, caption)
+                )
+              )
+            )
+          ]
+        )
+      )
     );
   }
 
+  scanImage() async {
+    for (int i = 0; i < mediaUrl.length; i++) {
+      String url = 'https://image-object-detector.herokuapp.com/imagelookup?image=${mediaUrl[i]}';
+      Response response = await get(url);
+      String body = response.body;
+      Map<String, dynamic> responseData = jsonDecode(body);
+      if (responseData['imgObj'].length > 0) {
+        String url = 'https://neutrinoapi.net/bad-word-filter';
+        String id = 'Mr Easy';
+        String key = 'vWNOhCVMiTzzAATDagjztQWBtDATqf5i9oxcUX1DCduneCZV';
+        String content = responseData['imgObj'][0];
+        Map<String, String> headers = { 'Content-type': 'application/json' };
+        String json = '{ "user-id": $id, "api-key": $key, "content": $content  }';
+        Response response = await post(url, headers: headers, body: json);
+        String body = response.body;
+        Map<String, dynamic> data = jsonDecode(body);
+//        if (data['is-bad'] != true || data['is-bad'] != "true")  {
+          mediaUrl[i] = 'https://www.pngitem.com/pimgs/m/513-5133831_transparent-censor-blur-png-png-download.png';
+//        }
+      }
+    }
+    setState(() => isImagesScanned = true);
+  }
+
   buildPostImage() {
-    return GestureDetector(
-      onDoubleTap: handleLikePost,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          CarouselSlider(
-            items: mediaUrl.map<Widget>(
-              (media) {
-                if (media.runtimeType == String) {
+    if (isImagesScanned) {
+      return GestureDetector(
+        onDoubleTap: handleLikePost,
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            CarouselSlider(
+              items: mediaUrl.map<Widget>(
+                (media) {
                   if (media.contains('mp4')) {
                     return VideoPlayerWidget(videoType: 'network', video: media);
                   }
                   return Zoomable(child: cachedNetworkImage(context, media));
-                } else {
-                  return VideoPlayerWidget(videoType: 'file', video: media);
                 }
-              }
-            ).toList(),
-            autoPlay: false,
-            viewportFraction: 1.0,
-            aspectRatio: 1.0,
-            enableInfiniteScroll: false,
-            onPageChanged: (index) {
-              setState(() { currentMedia = index; });
-            },
-          ),
-          showHeart ? Icon(
-            Icons.favorite,
-            size: 80.0,
-            color: Colors.red
-          ) : Text('')
-        ],
-      )
-    );
+              ).toList(),
+              autoPlay: false,
+              viewportFraction: 1.0,
+              aspectRatio: 1.0,
+              enableInfiniteScroll: false,
+              onPageChanged: (index) {
+                setState(() { currentMedia = index; });
+              },
+            ),
+            showHeart ? Icon(
+              Icons.favorite,
+              size: 80.0,
+              color: Colors.red
+            ) : Text('')
+          ],
+        )
+      );
+    } else {
+      return Center(child: circularProgress(context));
+    }
   }
 
   buildPostFooter() {
@@ -595,7 +757,7 @@ class _PostState extends State<Post> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: currentMedia == index
-                    ? Theme.of(context).primaryColor
+                    ? Theme.of(context).accentColor
                     : Color.fromRGBO(0, 0, 0, 0.4)
                 )
               );
@@ -664,30 +826,22 @@ class _PostState extends State<Post> {
                 )
               )
             ),
-            Expanded(child: Row(children: buildCaption()))
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    color: Colors.black
+                  ),
+                  children: buildCaption(context, caption)
+                )
+              )
+            )
           ],
         ) : timeWidget(),
         mediaUrl.length > 0 && caption.isNotEmpty ? timeWidget() : Text('')
       ],
     );
-  }
-
-  buildCaption() {
-    List<String> splittedCaption = caption.split(' ');
-    List<Widget> mergedCaption = new List<Widget>();
-    for (String caption in splittedCaption) {
-      if (caption.contains('#')) {
-        mergedCaption.add(Text(
-          '$caption ',
-          style: TextStyle(
-            color: Colors.blue,
-            decoration: TextDecoration.underline
-          )
-        ));
-      }
-      mergedCaption.add(Text('$caption '));
-    }
-    return mergedCaption;
   }
 
   timeWidget() {
@@ -722,7 +876,7 @@ class _PostState extends State<Post> {
             ? buildPostImage()
             : buildPostContent(),
         isPostDeleted ? Text('') : buildPostFooter()
-      ],
+      ]
     );
   }
 }
@@ -741,17 +895,42 @@ dynamic mediaUrl }) {
   );
 }
 
-int getLikeCount(likes) {
+int countTruishObject(object) {
   // if no likes, return 0
-  if (likes == null) {
+  if (object == null) {
     return 0;
   }
   int count = 0;
   // if the key is explicitly set to true, add a like
-  likes.values.forEach((val) {
+  object.values.forEach((val) {
     if (val == true) {
       count += 1;
     }
   });
   return count;
+}
+
+List<TextSpan> buildCaption(BuildContext context, String caption, {Color color}) {
+  List<String> splittedCaption = caption.split(' ');
+  List<TextSpan> mergedCaption = List<TextSpan>();
+  for (String captionSplit in splittedCaption) {
+    if (captionSplit.contains('#')) {
+      mergedCaption.add(TextSpan(
+        text: '$captionSplit ',
+        recognizer: TapGestureRecognizer()..onTap = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Search(query: captionSplit))
+          );
+        },
+        style: TextStyle(
+          color: color != null ? color : Colors.blue,
+          decoration: TextDecoration.underline
+        )
+      ));
+    } else {
+      mergedCaption.add(TextSpan(text: '$captionSplit '));
+    }
+  }
+  return mergedCaption;
 }

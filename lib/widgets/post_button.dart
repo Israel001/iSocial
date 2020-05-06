@@ -14,13 +14,13 @@ FlatButton postButton({
       child: Text(
         text,
         style: TextStyle(
-          color: Colors.purpleAccent,
+          color: Theme.of(context).accentColor,
           fontWeight: FontWeight.bold
         )
       ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.purpleAccent),
+        border: Border.all(color: Theme.of(context).accentColor),
         borderRadius: BorderRadius.circular(3.0)
       )
     )

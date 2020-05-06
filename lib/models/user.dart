@@ -6,6 +6,7 @@ class User {
   final String email;
   final String photoUrl;
   final String displayName;
+  final String mobile;
   final String bio;
 
   User({
@@ -14,6 +15,7 @@ class User {
     this.email,
     this.photoUrl,
     this.displayName,
+    this.mobile,
     this.bio
   });
 
@@ -24,6 +26,7 @@ class User {
       username: doc['username'],
       photoUrl: doc['photoUrl'],
       displayName: doc['displayName'],
+      mobile: doc['mobile'],
       bio: doc['bio']
     );
   }

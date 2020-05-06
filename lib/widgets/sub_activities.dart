@@ -14,7 +14,7 @@ class SubActivities extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).cardColor,
           title: Text(
             type,
             style: TextStyle(

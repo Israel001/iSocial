@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:isocial/pages/post_screen.dart';
+import 'package:isocial/pages/post/post_screen.dart';
 
 import 'package:isocial/widgets/custom_image.dart';
 import 'package:isocial/widgets/post.dart';
@@ -44,7 +44,7 @@ class PostTileState extends State<PostTile> {
         if (snapshot.connectionState == ConnectionState.done) {
           return VideoPlayer(videoPlayerController);
         }
-        return Center(child: circularProgress());
+        return Center(child: circularProgress(context));
       },
     );
   }

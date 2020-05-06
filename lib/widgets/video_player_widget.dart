@@ -65,7 +65,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       future: initializeVideoPlayerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return circularProgress();
+          return circularProgress(context);
         }
         return Container(
           color: Colors.black,
@@ -78,7 +78,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                     ? AspectRatio(
                       aspectRatio: videoPlayerController.value.aspectRatio,
                       child: VideoPlayer(videoPlayerController)
-                  ) : circularProgress(),
+                  ) : circularProgress(context),
                   !videoPlayerController.value.isPlaying
                       ? FloatingActionButton(
                     elevation: 0,

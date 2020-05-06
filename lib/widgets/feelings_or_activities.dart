@@ -167,7 +167,7 @@ class FeelingsOrActivitiesState extends State<FeelingsOrActivities> with
                 child: Text(
                   'Done',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).accentColor,
                     fontWeight: FontWeight.bold
                   )
                 ),
@@ -198,7 +198,7 @@ class FeelingsOrActivitiesState extends State<FeelingsOrActivities> with
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).cardColor,
           title: Text(
             pageState == 'feelings'
                 ? 'How are you feeling?'
@@ -227,7 +227,7 @@ class FeelingsOrActivitiesState extends State<FeelingsOrActivities> with
                   child: Text(
                     'FEELINGS',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor
+                      color: Theme.of(context).cardColor
                     )
                   )
                 ),
@@ -235,12 +235,12 @@ class FeelingsOrActivitiesState extends State<FeelingsOrActivities> with
                   child: Text(
                     'ACTIVITIES',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor
+                      color: Theme.of(context).cardColor
                     )
                   )
                 )
               ],
-              indicatorColor: Theme.of(context).primaryColor,
+              indicatorColor: Theme.of(context).cardColor,
               controller: tabController,
             ),
             TextField(

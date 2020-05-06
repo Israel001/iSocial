@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:isocial/models/user.dart';
-import 'package:isocial/pages/home.dart';
+import 'package:isocial/pages/home/home.dart';
 import 'package:isocial/widgets/progress.dart';
 
 class TagPeople extends StatefulWidget {
@@ -19,6 +19,7 @@ class TagPeople extends StatefulWidget {
 class TagPeopleState extends State<TagPeople> {
   List<User> followers;
   Map<String, String> isSelected;
+  bool isLoading = false;
 
   TagPeopleState({ this.isSelected });
 
@@ -29,12 +30,13 @@ class TagPeopleState extends State<TagPeople> {
   }
 
   initFollowers() async {
+    setState(() { isLoading = true; });
     List<User> followers = [];
     QuerySnapshot snapshot = await followersRef
       .document(currentUser.id)
       .collection('userFollowers')
       .getDocuments();
-    snapshot.documents.forEach((doc) {
+    for (var doc in snapshot.documents) {
       if (doc.documentID != currentUser.id) {
         usersRef
           .document(doc.documentID)
@@ -42,10 +44,13 @@ class TagPeopleState extends State<TagPeople> {
             if (doc.exists) {
               User user = User.fromDocument(doc);
               followers.add(user);
-              setState(() { this.followers = followers; });
             }
           });
       }
+    }
+    setState(() {
+      isLoading = false;
+      this.followers = followers;
     });
   }
 
@@ -63,6 +68,34 @@ class TagPeopleState extends State<TagPeople> {
   }
 
   buildFollowers() {
+    if (followers == null || followers.isEmpty) {
+      return Column(
+        children: <Widget>[
+          Container(
+            child: Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      'You currently have no one to tag. When people start '
+                      'following you, their profile will show up here and you '
+                      'can tag them',
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent
+                      )
+                    )
+                  ],
+                )
+              )
+            )
+          )
+        ],
+      );
+    }
     return ListView(
       children: List.generate(followers.length, (index) {
         return GestureDetector(
@@ -84,7 +117,7 @@ class TagPeopleState extends State<TagPeople> {
                       decoration: BoxDecoration(
                         color: isSelected != null
                             ? isSelected.containsKey(followers[index].id)
-                            ? Theme.of(context).primaryColor
+                            ? Theme.of(context).cardColor
                             : Colors.white : Colors.white,
                         border: Border.all(color: Colors.grey, width: 0.5),
                         borderRadius: BorderRadius.circular(50)
@@ -124,7 +157,7 @@ class TagPeopleState extends State<TagPeople> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).cardColor,
           title: Text(
             'Tag People',
             style: TextStyle(
@@ -143,7 +176,7 @@ class TagPeopleState extends State<TagPeople> {
             )
           ],
         ),
-        body: followers == null ? circularProgress() : buildFollowers()
+        body: isLoading ? circularProgress(context) : buildFollowers()
       )
     );
   }

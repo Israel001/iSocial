@@ -5,11 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:isocial/models/user.dart';
 import 'package:isocial/widgets/post.dart';
+import 'package:native_state/native_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
-import 'login.dart';
+import 'package:isocial/pages/home/home.dart';
+import 'package:isocial/pages/auth/auth.dart';
 
 class SplashScreen extends StatefulWidget {
+  final SavedStateData savedState;
+  final BuildContext context;
+
+  SplashScreen(this.context, { this.savedState });
+
   @override
   State<StatefulWidget> createState() {
     return _SplashScreenState();
@@ -18,6 +25,13 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  Timer _timer;
+
+  @override
+  void dispose() {
+    if (_timer != null) _timer.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -26,32 +40,65 @@ class _SplashScreenState extends State<SplashScreen> {
       .then((account) async {
         if (account != null) {
           List<Post> posts = await initTimelinePosts(account.id);
-          List<String> followingList = await configureTimelineForNoPost(account.id);
+          List<String> followingList = await configureTimelineForNoPost(
+            account.id
+          );
           currentUser =
             User.fromDocument(await usersRef.document(account.id).get());
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Home(
-              posts: posts,
-              followingList: followingList
-            ))
+            MaterialPageRoute(
+              builder: (context) => Home(
+                posts: posts,
+                followingList: followingList,
+                savedState: widget.savedState
+              )
+            )
           );
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Login())
+            MaterialPageRoute(
+              settings: RouteSettings(name: Auth.route),
+              builder: (context) => Auth(savedState: widget.savedState)
+            )
           );
         }
-      }).catchError((_){
-        Timer(
-          Duration(seconds: 3),
+      }).catchError((_) async {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        String userId = prefs.getString('userId');
+        if (userId != null && userId.isNotEmpty) {
+          DocumentSnapshot doc = await usersRef.document(userId).get();
+          currentUser = User.fromDocument(doc);
+          List<Post> posts = await initTimelinePosts(userId);
+          List<String> followingList = await configureTimelineForNoPost(userId);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Home(
+                posts: posts,
+                followingList: followingList,
+                savedState: widget.savedState,
+              )
+            )
+          );
+        } else {
+          _timer = new Timer(
+            Duration(milliseconds: 3000),
             () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => Login())
-              );
+              Future(() {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: Auth.route),
+                      builder: (context) =>
+                        Auth(savedState: widget.savedState)
+                  )
+                );
+              });
             }
-        );
+          );
+        }
       });
   }
 
@@ -79,8 +126,10 @@ initTimelinePosts(String userId) async {
   QuerySnapshot snapshot = await timelineRef
     .document(userId)
     .collection('timelinePosts')
-    .orderBy('createdAt', descending: true)
-    .where('isDeleted', isEqualTo: false)
+    .where('hide', isEqualTo: false)
+    .where('postAudience', isEqualTo: 'Followers')
+    .where('snoozed', isEqualTo: false)
+    .limit(1)
     .getDocuments();
   List<Post> posts =
   snapshot.documents.map((doc) => Post.fromDocument(doc)).toList();
@@ -92,7 +141,7 @@ configureTimelineForNoPost(String userId) async {
     .document(userId)
     .collection('userFollowing')
     .getDocuments();
-  List<String> followingList =
-  snapshot.documents.map((doc) => doc.documentID).toList();
+  List<String> followingList = snapshot.documents
+    .map((doc) => doc.documentID).toList();
   return followingList;
 }

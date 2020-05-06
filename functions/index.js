@@ -35,7 +35,11 @@ exports.onCreateFollower = functions.firestore
       if (doc.exists) {
         const postId = doc.id;
         const postData = doc.data();
-        timelinePostsRef.doc(postId).set({...postData, 'hide': false});
+        timelinePostsRef.doc(postId).set({
+          ...postData,
+          'hide': false,
+          'snoozed': false
+        });
       }
     })
   });
@@ -69,6 +73,12 @@ exports.onCreatePost = functions
     const userId = context.params.userId;
     const postId = context.params.postId;
 
+    admin
+      .firestore()
+      .collection('allPosts')
+      .doc(postId)
+      .set(postCreated);
+
     // Get all the followers of the user who made the post
     const userFollowersRef = admin
       .firestore()
@@ -76,18 +86,34 @@ exports.onCreatePost = functions
       .doc(userId)
       .collection('userFollowers');
 
+    const userSnapshot = await admin
+      .firestore()
+      .collection('users')
+      .doc(userId).get();
+
     const querySnapshot = await userFollowersRef.get();
     // Add new post to each follower's timeline
     querySnapshot.forEach(doc => {
       const followerId = doc.id;
 
-      admin
-        .firestore()
-        .collection('timeline')
-        .doc(followerId)
-        .collection('timelinePosts')
-        .doc(postId)
-        .set(postCreated);
+      if (userSnapshot.data()['snoozed'] != null &&
+        userSnapshot.data()['snoozed'][followerId] === true) {
+        admin
+          .firestore()
+          .collection('timeline')
+          .doc(followerId)
+          .collection('timelinePosts')
+          .doc(postId)
+          .set({...postCreated, 'hide': false, 'snoozed': true});
+      } else {
+        admin
+          .firestore()
+          .collection('timeline')
+          .doc(followerId)
+          .collection('timelinePosts')
+          .doc(postId)
+          .set({...postCreated, 'hide': false, 'snoozed': false})
+      }
     })
   });
 
@@ -98,6 +124,14 @@ exports.onUpdatePost = functions
     const postUpdated = change.after.data();
     const userId = context.params.userId;
     const postId = context.params.postId;
+
+    admin
+      .firestore()
+      .collection('allPosts')
+      .doc(postId)
+      .get().then(doc => {
+        if (doc.exists) doc.ref.update(postUpdated);
+      });
 
     // Get all the followers of the user who made the post
     const userFollowersRef = admin
@@ -129,6 +163,15 @@ exports.onDeletePost = functions
   .onDelete(async (snapshot, context) => {
     const userId = context.params.userId;
     const postId = context.params.postId;
+
+    admin
+      .firestore
+      .collection('allPosts')
+      .doc(postId)
+      .get()
+      .then(doc => {
+        if (doc.exists) doc.ref.delete();
+      });
 
     // Get all the followers of the user who made the post
     const userFollowersRef = admin
@@ -170,7 +213,7 @@ exports.onCreateActivityFeedItem = functions
     if (androidNotificationToken) {
       sendNotification(androidNotificationToken, snapshot.data());
     } else {
-      console.log("No toekn for user, cannot send notification");
+      console.log("No token for user, cannot send notification");
     }
 
     function sendNotification(androidNotificationToken, activityFeedItem) {
@@ -206,7 +249,7 @@ exports.onCreateActivityFeedItem = functions
         // Response is a message ID string
         console.log("Successfully sent message", response);
       }).catch(error => {
-        console.log("Erorr sending message", error);
+        console.log("Error sending message", error);
       });
     }
   });

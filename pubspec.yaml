@@ -42,6 +42,14 @@ dependencies:
   matrix_gesture_detector: ^0.1.0
   shared_preferences: ^0.5.3+5
   intl: ^0.16.0
+  native_state: ^1.0.1
+  http: ^0.11.3+16
+  audioplayers: ^0.11.0
+  flutter_local_notifications: ^0.8.4+3
+  rxdart: ^0.22.1+1
+#  flutter_redux: ^0.6.0
+#  redux_thunk: ^0.3.0
+#  url_launcher: ^5.2.1
   cached_network_image:
   flutter_svg:
 
@@ -79,6 +87,19 @@ flutter:
     - assets/images/activity_feed.svg
     - assets/images/no_content.svg
     - assets/launcher/logo.png
+    - assets/images/groups_default.jpg
+    - assets/images/book.png
+    - assets/images/history.jpg
+    - assets/images/celebrities.png
+    - assets/images/music.png
+    - assets/images/politics.jpg
+    - assets/images/science.png
+    - assets/images/bg_stars.png
+    - assets/music/bg_music.mp3
+    - assets/music/right_answer.mp3
+    - assets/music/wrong_answer.mp3
+    - assets/music/success.mp3
+    - assets/music/failure.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
