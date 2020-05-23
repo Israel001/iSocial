@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:http/http.dart';
@@ -149,7 +148,6 @@ class _PostState extends State<Post> with StateRestoration {
   @override
   void initState() {
     super.initState();
-    scanImage();
     getCommentCount();
     if (feelingOrActivity != null) {
       feelingOrActivity.forEach((key, value) {
@@ -706,40 +704,36 @@ class _PostState extends State<Post> with StateRestoration {
   }
 
   buildPostImage() {
-    if (isImagesScanned) {
-      return GestureDetector(
-        onDoubleTap: handleLikePost,
-        child: Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            CarouselSlider(
-              items: mediaUrl.map<Widget>(
-                (media) {
-                  if (media.contains('mp4')) {
-                    return VideoPlayerWidget(videoType: 'network', video: media);
-                  }
-                  return Zoomable(child: cachedNetworkImage(context, media));
+    return GestureDetector(
+      onDoubleTap: handleLikePost,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          CarouselSlider(
+            items: mediaUrl.map<Widget>(
+              (media) {
+                if (media.contains('mp4')) {
+                  return VideoPlayerWidget(videoType: 'network', video: media);
                 }
-              ).toList(),
-              autoPlay: false,
-              viewportFraction: 1.0,
-              aspectRatio: 1.0,
-              enableInfiniteScroll: false,
-              onPageChanged: (index) {
-                setState(() { currentMedia = index; });
-              },
-            ),
-            showHeart ? Icon(
-              Icons.favorite,
-              size: 80.0,
-              color: Colors.red
-            ) : Text('')
-          ],
-        )
-      );
-    } else {
-      return Center(child: circularProgress(context));
-    }
+                return Zoomable(child: cachedNetworkImage(context, media));
+              }
+            ).toList(),
+            autoPlay: false,
+            viewportFraction: 1.0,
+            aspectRatio: 1.0,
+            enableInfiniteScroll: false,
+            onPageChanged: (index) {
+              setState(() { currentMedia = index; });
+            },
+          ),
+          showHeart ? Icon(
+            Icons.favorite,
+            size: 80.0,
+            color: Colors.red
+          ) : Text('')
+        ],
+      )
+    );
   }
 
   buildPostFooter() {

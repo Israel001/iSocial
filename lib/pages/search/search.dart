@@ -112,7 +112,6 @@ class _SearchState extends State<Search> with
         searchResults['posts'].forEach((res) => finalSearchResults.add(res));
         _isLoading = false;
       });
-
     } else { clearSearch(); }
   }
 

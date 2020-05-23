@@ -443,7 +443,7 @@ class _EditProfileState extends State<EditProfile> {
                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: FlatButton.icon(
-                    onPressed: logout(
+                    onPressed: () => logout(
                       context,
                       savedState: widget.savedState,
                       prefs: prefs

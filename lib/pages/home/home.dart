@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:device_apps/device_apps.dart';
 
 // Models
 import 'package:isocial/models/user.dart';
@@ -119,13 +120,27 @@ class _HomeState extends State<Home> {
         onTap: onTap,
         activeColor: Theme.of(context).cardColor,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.whatshot)),
+          BottomNavigationBarItem(icon: Icon(Icons.whatshot),),
           BottomNavigationBarItem(icon: Icon(Icons.notifications_active)),
           BottomNavigationBarItem(icon: Icon(Icons.photo_camera, size: 35.0)),
           BottomNavigationBarItem(icon: Icon(Icons.search)),
           BottomNavigationBarItem(icon: Icon(Icons.account_circle))
         ]
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          bool installed = await DeviceApps.isAppInstalled(
+            'com.programmingmadeeasy.isocial_messenger.isocial_messenger'
+          );
+          if (installed) {
+            DeviceApps.openApp(
+              'com.programmingmadeeasy.isocial_messenger.isocial_messenger'
+            );
+          }
+        },
+        child: Icon(Icons.chat),
+        backgroundColor: Colors.blue,
+      )
     );
   }
 
